@@ -1,10 +1,10 @@
 extends Control
 
-# class member variables go here, for example:
-# var a = 2
-# var b = "textvar"
+func isMouseIn():
+	return 
 
 func _ready():
+	print(get_tree().current_scene)
 	# Called when the node is added to the scene for the first time.
 	# Initialization here
 	pass
