@@ -1,20 +1,25 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://Stone/Stone.gd" type="Script" id=1]
-[ext_resource path="res://Stone/fixedblue.png" type="Texture" id=2]
+[ext_resource path="res://Stone/RedStone.png" type="Texture" id=2]
+[ext_resource path="res://Stone/curling_hit.wav" type="AudioStream" id=3]
 
 [sub_resource type="PhysicsMaterial" id=1]
-bounce = 1.0
+friction = 0.2
+bounce = 0.75
 
 [sub_resource type="CircleShape2D" id=2]
-radius = 95.0
+radius = 50.6888
 
 [node name="Stone" type="RigidBody2D"]
 input_pickable = true
-mass = 50.0
 physics_material_override = SubResource( 1 )
 gravity_scale = 0.0
-linear_damp = 0.5
+continuous_cd = 1
+contacts_reported = 4
+contact_monitor = true
+linear_damp = 1.2
+angular_damp = 0.5
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_group_": true
@@ -26,4 +31,5 @@ texture = ExtResource( 2 )
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource( 2 )
 
-[connection signal="input_event" from="." to="." method="_on_Stone_input_event"]
+[node name="Hit" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource( 3 )
