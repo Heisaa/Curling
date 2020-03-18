@@ -2,7 +2,7 @@
 
 [ext_resource path="res://Stone/Stone.gd" type="Script" id=1]
 [ext_resource path="res://Stone/RedStone.png" type="Texture" id=2]
-[ext_resource path="res://Stone/curling_hit.wav" type="AudioStream" id=3]
+[ext_resource path="res://Stone/hit_3.wav" type="AudioStream" id=3]
 
 [sub_resource type="PhysicsMaterial" id=1]
 friction = 0.2

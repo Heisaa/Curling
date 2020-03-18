@@ -41,15 +41,14 @@ func _physics_process(_delta):
 	
 	last_velocity = linear_velocity
 	
-	# Out if outside of rink
-	
 
 # Sound
 func _on_Stone_body_entered(_body):
 	$Hit.play()
 
 func _on_Stone_body_exit(body):
-	body.queue_free()
+	if body.global_position.y < line_over.global_position.y:
+		body.queue_free()
 
 # Input functions
 func _input_event( _viewport, event, _shape_idx ):
