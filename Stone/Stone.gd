@@ -49,6 +49,10 @@ func _on_Stone_body_entered(_body):
 func _on_Stone_body_exit(body):
 	if body.global_position.y < line_over.global_position.y:
 		body.queue_free()
+	else:
+		body.is_picked = false
+		body.global_position = Vector2(540, 1700)
+		body.linear_velocity = Vector2(0,0)
 
 # Input functions
 func _input_event( _viewport, event, _shape_idx ):
