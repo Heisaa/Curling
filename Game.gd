@@ -12,17 +12,28 @@ var yellow_score_sprites = []
 var yellow_played = 0
 var yellow_score = 0
 
+# Other vars
 const max_stones = 4
 var last_played = "yellow"
+var end_over = false
 var game_over = false
+var end = 1
+var ends_to_play = 4
+
+# Signals
+signal red_score_changed
+signal yellow_score_changed
 
 onready var stone_scene = load("res://Stone/Stone.tscn")
 
 func _ready():
+	connect("red_score_changed", $RedScore, "update_score")
+	connect("yellow_score_changed", $YellowScore, "update_score")
 	init_score()
 
 func _process(_delta):
-	if game_over:
+	
+	if end_over:
 		# Calculate points
 		var red_distances = []
 		var yellow_distance = []
@@ -37,18 +48,37 @@ func _process(_delta):
 		red_distances.sort()
 		yellow_distance.sort()
 		
-		#
-		# FIX
-		#
-		if red_distances[0] == yellow_distance[0]:
-			print("Draw")
-		elif red_distances[0] < yellow_distance[0] or yellow_distance.empty():
-			print("Red wins")
-		elif yellow_distance[0] < red_distances[0] or red_distances.empty():
-			print("Yellow wins")
+		if not red_distances.empty() and yellow_distance.empty():
+			red_score += red_distances.size()
+		elif red_distances.empty() and not yellow_distance.empty():
+			yellow_score += yellow_distance.size()
+		elif not red_distances.empty() and not yellow_distance.empty():
+			if red_distances[0] < yellow_distance[0]:
+				for dist in red_distances:
+					if dist < yellow_distance[0]:
+						red_score += 1
+			elif yellow_distance[0] < red_distances[0]:
+				for dist in yellow_distance:
+					if dist < red_distances[0]:
+						yellow_score += 1
 		
 		# Reload game
-		get_tree().reload_current_scene()
+		for stone in (red_stones + yellow_stones):
+			stone.queue_free()
+		
+		red_stones.clear()
+		yellow_stones.clear()
+		red_played = 0
+		yellow_played = 0
+		
+		emit_signal("red_score_changed", red_score)
+		emit_signal("yellow_score_changed", yellow_score)
+		
+		if end > ends_to_play:
+			game_over = true
+		
+		end += 1
+		end_over = false
 	else:
 		play_round()
 		
@@ -66,9 +96,6 @@ func play_round():
 	if still_and_dead:
 		update_score()
 		
-		print(red_stones)
-		print (yellow_stones)
-		
 		var closest_red = 2000
 		for stone in red_stones:
 			if is_instance_valid(stone):
@@ -83,10 +110,9 @@ func play_round():
 			else:
 				yellow_stones.erase(stone)
 			
-		print("Closest red: " + str(closest_red) + " " + "Closest yellow: " + str(closest_yellow))
 		# Check which stone to spawn or if game is over
 		if red_played >= max_stones and yellow_played >= max_stones:
-			game_over = true
+			end_over = true
 		elif (closest_red < closest_yellow and yellow_played < max_stones) or red_played >= max_stones:
 			create_yellow_stone()
 		elif (closest_red > closest_yellow and red_played < max_stones) or yellow_played >= max_stones:

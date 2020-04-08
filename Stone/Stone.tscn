@@ -5,7 +5,7 @@
 [ext_resource path="res://Stone/hit_3.wav" type="AudioStream" id=3]
 
 [sub_resource type="PhysicsMaterial" id=1]
-friction = 0.2
+friction = 0.05
 bounce = 0.75
 
 [sub_resource type="CircleShape2D" id=2]
