@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://theme.tres" type="Theme" id=1]
+[ext_resource path="res://UI/theme.tres" type="Theme" id=1]
 
 [node name="Restart" type="Node"]
 
@@ -21,17 +21,52 @@ __meta__ = {
 }
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
-margin_left = 50.0
 margin_right = 1080.0
-margin_bottom = 958.0
+margin_bottom = 1512.0
 size_flags_vertical = 3
+custom_constants/margin_right = 100
+custom_constants/margin_top = 100
+custom_constants/margin_left = 100
+custom_constants/margin_bottom = 100
 
 [node name="PanelContainer" type="PanelContainer" parent="VBoxContainer/MarginContainer"]
-margin_right = 1030.0
-margin_bottom = 958.0
+margin_left = 100.0
+margin_top = 100.0
+margin_right = 980.0
+margin_bottom = 1412.0
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
-margin_top = 962.0
+[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/PanelContainer"]
+margin_top = 630.0
+margin_right = 880.0
+margin_bottom = 681.0
+text = "Test Player Wins!"
+
+[node name="MarginContainer2" type="CenterContainer" parent="VBoxContainer"]
+margin_top = 1516.0
+margin_right = 1080.0
+margin_bottom = 1716.0
+rect_min_size = Vector2( 1080, 200 )
+size_flags_horizontal = 3
+
+[node name="ButtonPlayAgain" type="Button" parent="VBoxContainer/MarginContainer2"]
+margin_left = 290.0
+margin_top = 44.0
+margin_right = 790.0
+margin_bottom = 155.0
+rect_min_size = Vector2( 500, 0 )
+text = "Play Again"
+
+[node name="MarginContainer3" type="CenterContainer" parent="VBoxContainer"]
+margin_top = 1720.0
 margin_right = 1080.0
 margin_bottom = 1920.0
-size_flags_vertical = 3
+rect_min_size = Vector2( 1080, 200 )
+size_flags_horizontal = 3
+
+[node name="ButtonMainMenu" type="Button" parent="VBoxContainer/MarginContainer3"]
+margin_left = 290.0
+margin_top = 44.0
+margin_right = 790.0
+margin_bottom = 155.0
+rect_min_size = Vector2( 500, 0 )
+text = "Main Menu"

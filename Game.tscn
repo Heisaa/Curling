@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=11 format=2]
 
 [ext_resource path="res://Game.gd" type="Script" id=1]
 [ext_resource path="res://Goal/Untitled.png" type="Texture" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://Fonts/Inter-Regular-slnt=0.ttf" type="DynamicFontData" id=4]
 [ext_resource path="res://Labels/RedScore.gd" type="Script" id=5]
 [ext_resource path="res://Labels/YellowScore.gd" type="Script" id=6]
+[ext_resource path="res://UI/Restart.tscn" type="PackedScene" id=7]
 
 [sub_resource type="RectangleShape2D" id=1]
 extents = Vector2( 540, 960 )
@@ -92,3 +93,5 @@ script = ExtResource( 6 )
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Restart" parent="." instance=ExtResource( 7 )]
