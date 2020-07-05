@@ -17,14 +17,17 @@ const max_stones = 4
 var last_played = "yellow"
 var end_over = false
 var game_over = false
+var waiting_for_restart = false
 var end = 1
 var ends_to_play = 4
 
 # Signals
 signal red_score_changed
 signal yellow_score_changed
+signal final_score
 
 onready var stone_scene = load("res://Stone/Stone.tscn")
+onready var restart_scene = load("res://UI/Restart.tscn")
 
 func _ready():
 	connect("red_score_changed", $RedScore, "update_score")
@@ -33,7 +36,16 @@ func _ready():
 
 func _process(_delta):
 	
-	if end_over:
+	if game_over:
+		if not waiting_for_restart:
+			var restart = restart_scene.instance()
+			add_child(restart)
+			connect("final_score", $Restart, "show_final_score")
+			
+			var final_score_array = [red_score, yellow_score]
+			emit_signal("final_score", final_score_array)
+			waiting_for_restart = true
+	elif end_over:
 		# Calculate points
 		var red_distances = []
 		var yellow_distance = []
@@ -62,28 +74,38 @@ func _process(_delta):
 					if dist < red_distances[0]:
 						yellow_score += 1
 		
-		# Reload game
-		for stone in (red_stones + yellow_stones):
-			stone.queue_free()
-		
-		red_stones.clear()
-		yellow_stones.clear()
-		red_played = 0
-		yellow_played = 0
-		
 		emit_signal("red_score_changed", red_score)
 		emit_signal("yellow_score_changed", yellow_score)
+		
+		end += 1
+		end_over = false
 		
 		if end > ends_to_play:
 			game_over = true
 		
-		end += 1
-		end_over = false
+		# Reload game
+		if not game_over:
+			for stone in (red_stones + yellow_stones):
+				stone.queue_free()
+			
+			red_stones.clear()
+			yellow_stones.clear()
+			red_played = 0
+			yellow_played = 0
+			
+			if end % 2 == 0:
+				# end is even
+				last_played = "red"
+			else:
+				# end is odd
+				last_played = "yellow"
+		
 	else:
 		play_round()
 		
 
 func play_round():
+	update_score()
 	# Check if stone should be spawned
 	var still_and_dead = true 
 	var combined = red_stones + yellow_stones
@@ -94,7 +116,6 @@ func play_round():
 	
 	# Spawn stone for second closest player
 	if still_and_dead:
-		update_score()
 		
 		var closest_red = 2000
 		for stone in red_stones:

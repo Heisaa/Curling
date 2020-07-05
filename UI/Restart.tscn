@@ -1,8 +1,11 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://UI/theme.tres" type="Theme" id=1]
+[ext_resource path="res://Fonts/joseBig.tres" type="DynamicFont" id=2]
+[ext_resource path="res://UI/Restart.gd" type="Script" id=3]
 
 [node name="Restart" type="Node"]
+script = ExtResource( 3 )
 
 [node name="ColorRect" type="ColorRect" parent="."]
 margin_right = 1080.0
@@ -35,11 +38,33 @@ margin_top = 100.0
 margin_right = 980.0
 margin_bottom = 1412.0
 
-[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/PanelContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer/PanelContainer"]
+margin_right = 880.0
+margin_bottom = 1312.0
+custom_constants/separation = 70
+alignment = 1
+
+[node name="LabelWinner" type="Label" parent="VBoxContainer/MarginContainer/PanelContainer/VBoxContainer"]
+margin_top = 480.0
+margin_right = 880.0
+margin_bottom = 560.0
+custom_fonts/font = ExtResource( 2 )
+align = 1
+
+[node name="LabelTheScoreWas" type="Label" parent="VBoxContainer/MarginContainer/PanelContainer/VBoxContainer"]
 margin_top = 630.0
 margin_right = 880.0
 margin_bottom = 681.0
-text = "Test Player Wins!"
+text = "The Score was"
+align = 1
+
+[node name="LabelScore" type="Label" parent="VBoxContainer/MarginContainer/PanelContainer/VBoxContainer"]
+margin_top = 751.0
+margin_right = 880.0
+margin_bottom = 831.0
+custom_fonts/font = ExtResource( 2 )
+text = "0-0"
+align = 1
 
 [node name="MarginContainer2" type="CenterContainer" parent="VBoxContainer"]
 margin_top = 1516.0
@@ -70,3 +95,5 @@ margin_right = 790.0
 margin_bottom = 155.0
 rect_min_size = Vector2( 500, 0 )
 text = "Main Menu"
+[connection signal="pressed" from="VBoxContainer/MarginContainer2/ButtonPlayAgain" to="." method="_on_ButtonPlayAgain_pressed"]
+[connection signal="pressed" from="VBoxContainer/MarginContainer3/ButtonMainMenu" to="." method="_on_ButtonMainMenu_pressed"]
