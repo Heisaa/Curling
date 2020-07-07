@@ -19,7 +19,7 @@ var end_over = false
 var game_over = false
 var waiting_for_restart = false
 var end = 1
-var ends_to_play = 4
+var ends_to_play = 1
 
 # Signals
 signal red_score_changed
