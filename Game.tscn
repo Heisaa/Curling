@@ -79,7 +79,6 @@ margin_bottom = 1637.0
 grow_horizontal = 0
 theme = ExtResource( 4 )
 custom_fonts/font = ExtResource( 7 )
-custom_colors/font_color = Color( 0.192157, 0.14902, 0.317647, 1 )
 text = "0"
 align = 2
 script = ExtResource( 6 )

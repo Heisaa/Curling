@@ -13,6 +13,7 @@ onready var rink = get_node("../Rink")
 
 func _ready():
 	connect("body_entered",self, "_on_Stone_body_entered")
+	connect("body_exited",self, "_on_Stone_body_exited")
 	global_position = Vector2(540, 1700)
 	last_velocity = linear_velocity 
 
@@ -23,6 +24,9 @@ func init(color):
 		$Sprite.texture = load("res://Stone/RedStone.png")
 
 func _physics_process(_delta):
+	if is_out:
+		$collisionshape.disabled = true
+		linear_velocity = Vector2(0,0)
 	# Move if picked
 	if is_picked:
 		linear_velocity = get_global_mouse_position() - global_position
@@ -43,12 +47,28 @@ func _physics_process(_delta):
 	
 
 # Sound
+var play = true
 func _on_Stone_body_entered(_body):
-	$Hit.play()
+	
+	$Hit.set_volume_db(0)
+	_body.play = false
+	if play:
+		if last_velocity.length() > 1000:
+			$Hit.play()
+		else:
+			$Hit.set_volume_db(translate_range(last_velocity.length(), 0, 1000, -30, 0))
+			print($Hit.get_volume_db())
+			$Hit.play()
+			
+		
+
+func _on_Stone_body_exited(_body):
+	_body.play = true
+	
 
 func _on_Stone_body_exit(body):
 	if body.global_position.y < line_over.global_position.y:
-		body.queue_free()
+		body.is_out = true
 	else:
 		body.is_picked = false
 		body.global_position = Vector2(540, 1700)
@@ -67,3 +87,13 @@ func _input(event):
 func _event_is_left_button(event):
 	return event is InputEventMouseButton and event.button_index == BUTTON_LEFT    
 
+func translate_range(value, leftMin, leftMax, rightMin, rightMax):
+	# Figure out how 'wide' each range is
+	var leftSpan = leftMax - leftMin
+	var rightSpan = rightMax - rightMin
+
+	# Convert the left range into a 0-1 range (float)
+	var valueScaled = float(value - leftMin) / float(leftSpan)
+
+	# Convert the 0-1 range into a value in the right range.
+	return rightMin + (valueScaled * rightSpan)

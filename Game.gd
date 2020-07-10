@@ -107,26 +107,26 @@ func _process(_delta):
 func play_round():
 	update_score()
 	# Check if stone should be spawned
-	var still_and_dead = true 
+	var spawn_new_stone = true 
 	var combined = red_stones + yellow_stones
 	for stone in combined:
 		if is_instance_valid(stone):
 			if not stone.is_still or not stone.is_dead:
-				still_and_dead = false
+				spawn_new_stone = false
 	
 	# Spawn stone for second closest player
-	if still_and_dead:
+	if spawn_new_stone:
 		
 		var closest_red = 2000
 		for stone in red_stones:
-			if is_instance_valid(stone):
+			if is_instance_valid(stone) and stone.is_out == false:
 				closest_red = min(stone.global_position.distance_to($Goal.global_position), closest_red)
 			else:
 				red_stones.erase(stone)
 		
 		var closest_yellow = 2000
 		for stone in yellow_stones:
-			if is_instance_valid(stone):
+			if is_instance_valid(stone) and stone.is_out == false:
 				closest_yellow = min(stone.global_position.distance_to($Goal.global_position), closest_yellow)
 			else:
 				yellow_stones.erase(stone)
