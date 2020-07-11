@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://UI/theme.tres" type="Theme" id=1]
+[ext_resource path="res://Fonts/joseBig.tres" type="DynamicFont" id=2]
 
 [node name="MainMenu" type="Node2D"]
 
@@ -20,3 +21,65 @@ alignment = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 744.0
+margin_right = 1080.0
+margin_bottom = 884.0
+custom_constants/separation = 80
+alignment = 1
+
+[node name="Button" type="Button" parent="Panel/VBoxContainer/HBoxContainer"]
+margin_left = 299.0
+margin_right = 439.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 140, 0 )
+custom_fonts/font = ExtResource( 2 )
+text = "<"
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/HBoxContainer"]
+margin_left = 519.0
+margin_top = 30.0
+margin_right = 561.0
+margin_bottom = 110.0
+custom_fonts/font = ExtResource( 2 )
+text = "3"
+
+[node name="Button2" type="Button" parent="Panel/VBoxContainer/HBoxContainer"]
+margin_left = 641.0
+margin_right = 781.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 140, 0 )
+custom_fonts/font = ExtResource( 2 )
+text = ">"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 1035.0
+margin_right = 1080.0
+margin_bottom = 1175.0
+custom_constants/separation = 80
+alignment = 1
+
+[node name="Button3" type="Button" parent="Panel/VBoxContainer/HBoxContainer2"]
+margin_left = 299.0
+margin_right = 439.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 140, 0 )
+custom_fonts/font = ExtResource( 2 )
+text = "<"
+
+[node name="Label2" type="Label" parent="Panel/VBoxContainer/HBoxContainer2"]
+margin_left = 519.0
+margin_top = 30.0
+margin_right = 561.0
+margin_bottom = 110.0
+custom_fonts/font = ExtResource( 2 )
+text = "3"
+
+[node name="Button4" type="Button" parent="Panel/VBoxContainer/HBoxContainer2"]
+margin_left = 641.0
+margin_right = 781.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 140, 0 )
+custom_fonts/font = ExtResource( 2 )
+text = ">"
