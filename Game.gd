@@ -20,6 +20,7 @@ var game_over = false
 var waiting_for_restart = false
 var end = 1
 var ends_to_play = Global.ends
+var mode = Global.mode
 
 # Signals
 signal red_score_changed
@@ -60,19 +61,46 @@ func _process(_delta):
 		red_distances.sort()
 		yellow_distance.sort()
 		
-		if not red_distances.empty() and yellow_distance.empty():
-			red_score += red_distances.size()
-		elif red_distances.empty() and not yellow_distance.empty():
-			yellow_score += yellow_distance.size()
-		elif not red_distances.empty() and not yellow_distance.empty():
-			if red_distances[0] < yellow_distance[0]:
-				for dist in red_distances:
-					if dist < yellow_distance[0]:
-						red_score += 1
-			elif yellow_distance[0] < red_distances[0]:
-				for dist in yellow_distance:
-					if dist < red_distances[0]:
-						yellow_score += 1
+		print(red_distances)
+		print(yellow_distance)
+		
+		if mode == "Pétanque":
+			if not red_distances.empty() and yellow_distance.empty():
+				red_score += red_distances.size()
+			elif red_distances.empty() and not yellow_distance.empty():
+				yellow_score += yellow_distance.size()
+			elif not red_distances.empty() and not yellow_distance.empty():
+				if red_distances[0] < yellow_distance[0]:
+					for dist in red_distances:
+						if dist < yellow_distance[0]:
+							red_score += 1
+				elif yellow_distance[0] < red_distances[0]:
+					for dist in yellow_distance:
+						if dist < red_distances[0]:
+							yellow_score += 1
+		
+		elif mode == "Curling":
+			for distance in red_distances:
+				if distance > 325.25:
+					red_distances.erase(distance)
+			
+			for distance in yellow_distance:
+				if distance > 325.25:
+					yellow_distance.erase(distance)
+			
+			if not red_distances.empty() and yellow_distance.empty():
+				red_score += red_distances.size()
+			elif red_distances.empty() and not yellow_distance.empty():
+				yellow_score += yellow_distance.size()
+			elif not red_distances.empty() and not yellow_distance.empty():
+				if red_distances[0] < yellow_distance[0]:
+					for dist in red_distances:
+						if dist < yellow_distance[0]:
+							red_score += 1
+				elif yellow_distance[0] < red_distances[0]:
+					for dist in yellow_distance:
+						if dist < red_distances[0]:
+							yellow_score += 1
 		
 		emit_signal("red_score_changed", red_score)
 		emit_signal("yellow_score_changed", yellow_score)
@@ -131,18 +159,29 @@ func play_round():
 			else:
 				yellow_stones.erase(stone)
 			
-		# Check which stone to spawn or if game is over
-		if red_played >= max_stones and yellow_played >= max_stones:
-			end_over = true
-		elif (closest_red < closest_yellow and yellow_played < max_stones) or red_played >= max_stones:
-			create_yellow_stone()
-		elif (closest_red > closest_yellow and red_played < max_stones) or yellow_played >= max_stones:
-			create_red_stone()
-		elif closest_red == closest_yellow and yellow_played < max_stones and red_played < max_stones:
-			if last_played == "yellow":
-				create_red_stone()
-			else:
+		
+		if mode == "Pétanque":
+			# Check which stone to spawn or if game is over
+			if red_played >= max_stones and yellow_played >= max_stones:
+				end_over = true
+			elif (closest_red < closest_yellow and yellow_played < max_stones) or red_played >= max_stones:
 				create_yellow_stone()
+			elif (closest_red > closest_yellow and red_played < max_stones) or yellow_played >= max_stones:
+				create_red_stone()
+			elif closest_red == closest_yellow and yellow_played < max_stones and red_played < max_stones:
+				if last_played == "yellow":
+					create_red_stone()
+				else:
+					create_yellow_stone()
+		
+		elif mode == "Curling":
+			if red_played >= max_stones and yellow_played >= max_stones:
+				end_over = true
+			elif last_played == "red":
+				create_yellow_stone()
+			else:
+				create_red_stone()
+
 
 func create_red_stone():
 	if red_played < max_stones:

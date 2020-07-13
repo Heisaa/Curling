@@ -9,7 +9,7 @@ friction = 0.05
 bounce = 0.75
 
 [sub_resource type="CircleShape2D" id=2]
-radius = 50.6888
+radius = 50.5
 
 [node name="Stone" type="RigidBody2D"]
 input_pickable = true

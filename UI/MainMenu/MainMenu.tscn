@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://UI/theme.tres" type="Theme" id=1]
 [ext_resource path="res://Fonts/joseBig.tres" type="DynamicFont" id=2]
 [ext_resource path="res://UI/MainMenu/MainMenu.gd" type="Script" id=3]
+[ext_resource path="res://UI/MainMenu/unpressed.tres" type="StyleBox" id=4]
 
 [node name="MainMenu" type="Node2D"]
 script = ExtResource( 3 )
@@ -25,17 +26,17 @@ __meta__ = {
 }
 
 [node name="TitleLabel" type="Label" parent="Panel/VBoxContainer"]
-margin_top = 392.0
+margin_top = 201.0
 margin_right = 1080.0
-margin_bottom = 472.0
+margin_bottom = 281.0
 custom_fonts/font = ExtResource( 2 )
 text = "Curling"
 align = 1
 
 [node name="Vbox" type="VBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 623.0
+margin_top = 432.0
 margin_right = 1080.0
-margin_bottom = 854.0
+margin_bottom = 663.0
 custom_constants/separation = 40
 
 [node name="StonesLabel" type="Label" parent="Panel/VBoxContainer/Vbox"]
@@ -78,9 +79,9 @@ custom_fonts/font = ExtResource( 2 )
 text = ">"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer"]
-margin_top = 1005.0
+margin_top = 814.0
 margin_right = 1080.0
-margin_bottom = 1236.0
+margin_bottom = 1045.0
 custom_constants/separation = 40
 
 [node name="EndsLabel" type="Label" parent="Panel/VBoxContainer/VBoxContainer"]
@@ -122,11 +123,49 @@ rect_min_size = Vector2( 140, 0 )
 custom_fonts/font = ExtResource( 2 )
 text = ">"
 
+[node name="VBoxContainer2" type="VBoxContainer" parent="Panel/VBoxContainer"]
+margin_top = 1196.0
+margin_right = 1080.0
+margin_bottom = 1427.0
+custom_constants/separation = 40
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/VBoxContainer2"]
+margin_right = 1080.0
+margin_bottom = 51.0
+text = "Rules"
+align = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/VBoxContainer/VBoxContainer2"]
+margin_top = 91.0
+margin_right = 1080.0
+margin_bottom = 231.0
+custom_constants/separation = 60
+alignment = 1
+
+[node name="CurlingRules" type="Button" parent="Panel/VBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 230.0
+margin_right = 510.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 280, 140 )
+custom_styles/normal = ExtResource( 4 )
+toggle_mode = true
+pressed = true
+text = "Curling"
+
+[node name="PetanqueRules" type="Button" parent="Panel/VBoxContainer/VBoxContainer2/HBoxContainer"]
+margin_left = 570.0
+margin_right = 850.0
+margin_bottom = 140.0
+rect_min_size = Vector2( 280, 140 )
+custom_styles/normal = ExtResource( 4 )
+toggle_mode = true
+text = "Pétanque"
+
 [node name="StartButton" type="Button" parent="Panel/VBoxContainer"]
 margin_left = 375.0
-margin_top = 1387.0
+margin_top = 1578.0
 margin_right = 705.0
-margin_bottom = 1527.0
+margin_bottom = 1718.0
 rect_min_size = Vector2( 0, 140 )
 size_flags_horizontal = 4
 text = "Start Game"
@@ -134,4 +173,6 @@ text = "Start Game"
 [connection signal="pressed" from="Panel/VBoxContainer/Vbox/HBoxContainer/PlusStones" to="." method="_on_PlusStones_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/VBoxContainer/HBoxContainer2/MinusEnds" to="." method="_on_MinusEnds_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/VBoxContainer/HBoxContainer2/PlusEnds" to="." method="_on_PlusEnds_pressed"]
+[connection signal="toggled" from="Panel/VBoxContainer/VBoxContainer2/HBoxContainer/CurlingRules" to="." method="_on_CurlingRules_toggled"]
+[connection signal="toggled" from="Panel/VBoxContainer/VBoxContainer2/HBoxContainer/PetanqueRules" to="." method="_on_PetanqueRules_toggled"]
 [connection signal="pressed" from="Panel/VBoxContainer/StartButton" to="." method="_on_StartButton_pressed"]
