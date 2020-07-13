@@ -22,4 +22,4 @@ func _on_ButtonPlayAgain_pressed():
 
 
 func _on_ButtonMainMenu_pressed():
-	pass # Replace with function body.
+	get_tree().change_scene("res://UI/MainMenu/MainMenu.tscn")

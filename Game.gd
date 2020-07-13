@@ -13,13 +13,13 @@ var yellow_played = 0
 var yellow_score = 0
 
 # Other vars
-const max_stones = 4
+var max_stones = Global.stones
 var last_played = "yellow"
 var end_over = false
 var game_over = false
 var waiting_for_restart = false
 var end = 1
-var ends_to_play = 1
+var ends_to_play = Global.ends
 
 # Signals
 signal red_score_changed
