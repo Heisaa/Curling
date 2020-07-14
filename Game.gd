@@ -61,46 +61,42 @@ func _process(_delta):
 		red_distances.sort()
 		yellow_distance.sort()
 		
-		print(red_distances)
-		print(yellow_distance)
+#		print("reds before")
+#		print(red_distances)
+#		print("yellow before")
+#		print(yellow_distance)
 		
-		if mode == "Pétanque":
-			if not red_distances.empty() and yellow_distance.empty():
-				red_score += red_distances.size()
-			elif red_distances.empty() and not yellow_distance.empty():
-				yellow_score += yellow_distance.size()
-			elif not red_distances.empty() and not yellow_distance.empty():
-				if red_distances[0] < yellow_distance[0]:
-					for dist in red_distances:
-						if dist < yellow_distance[0]:
-							red_score += 1
-				elif yellow_distance[0] < red_distances[0]:
-					for dist in yellow_distance:
-						if dist < red_distances[0]:
-							yellow_score += 1
+		if mode == "Curling":
+			for i in red_distances.size():
+				if red_distances[i] > 325.25:
+					red_distances = red_distances.slice(0, i - 1)
+					break
+			
+			for i in yellow_distance.size():
+				if yellow_distance[i] > 325.25:
+					yellow_distance = yellow_distance.slice(0, i - 1)
+					break
 		
-		elif mode == "Curling":
-			for distance in red_distances:
-				if distance > 325.25:
-					red_distances.erase(distance)
-			
-			for distance in yellow_distance:
-				if distance > 325.25:
-					yellow_distance.erase(distance)
-			
-			if not red_distances.empty() and yellow_distance.empty():
-				red_score += red_distances.size()
-			elif red_distances.empty() and not yellow_distance.empty():
-				yellow_score += yellow_distance.size()
-			elif not red_distances.empty() and not yellow_distance.empty():
-				if red_distances[0] < yellow_distance[0]:
-					for dist in red_distances:
-						if dist < yellow_distance[0]:
-							red_score += 1
-				elif yellow_distance[0] < red_distances[0]:
-					for dist in yellow_distance:
-						if dist < red_distances[0]:
-							yellow_score += 1
+		
+		if not red_distances.empty() and yellow_distance.empty():
+			red_score += red_distances.size()
+		elif red_distances.empty() and not yellow_distance.empty():
+			yellow_score += yellow_distance.size()
+		elif not red_distances.empty() and not yellow_distance.empty():
+			if red_distances[0] < yellow_distance[0]:
+				for dist in red_distances:
+					if dist < yellow_distance[0]:
+						red_score += 1
+			elif yellow_distance[0] < red_distances[0]:
+				for dist in yellow_distance:
+					if dist < red_distances[0]:
+						yellow_score += 1
+		
+		
+#		print("reds after")
+#		print(red_distances)
+#		print("yellow after")
+#		print(yellow_distance)
 		
 		emit_signal("red_score_changed", red_score)
 		emit_signal("yellow_score_changed", yellow_score)
@@ -146,19 +142,24 @@ func play_round():
 	if spawn_new_stone:
 		
 		var closest_red = 2000
+		var filtered_red_stones = []
+		
 		for stone in red_stones:
 			if is_instance_valid(stone) and stone.is_out == false:
 				closest_red = min(stone.global_position.distance_to($Goal.global_position), closest_red)
-			else:
-				red_stones.erase(stone)
+				filtered_red_stones.append(stone)
+		red_stones = filtered_red_stones
+		
 		
 		var closest_yellow = 2000
+		var filtered_yellow_stones = []
+		
 		for stone in yellow_stones:
 			if is_instance_valid(stone) and stone.is_out == false:
 				closest_yellow = min(stone.global_position.distance_to($Goal.global_position), closest_yellow)
-			else:
-				yellow_stones.erase(stone)
-			
+				filtered_yellow_stones.append(stone)
+		yellow_stones = filtered_yellow_stones
+		
 		
 		if mode == "Pétanque":
 			# Check which stone to spawn or if game is over
@@ -181,6 +182,11 @@ func play_round():
 				create_yellow_stone()
 			else:
 				create_red_stone()
+			
+		print("red stones:")
+		print(red_stones)
+		print("yellow stones:")
+		print(yellow_stones)
 
 
 func create_red_stone():

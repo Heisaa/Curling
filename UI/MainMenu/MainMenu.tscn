@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://UI/theme.tres" type="Theme" id=1]
 [ext_resource path="res://Fonts/joseBig.tres" type="DynamicFont" id=2]
 [ext_resource path="res://UI/MainMenu/MainMenu.gd" type="Script" id=3]
 [ext_resource path="res://UI/MainMenu/unpressed.tres" type="StyleBox" id=4]
+[ext_resource path="res://UI/MainMenu/green_button.tres" type="StyleBox" id=5]
 
 [node name="MainMenu" type="Node2D"]
 script = ExtResource( 3 )
@@ -162,12 +163,15 @@ toggle_mode = true
 text = "Pétanque"
 
 [node name="StartButton" type="Button" parent="Panel/VBoxContainer"]
-margin_left = 375.0
+margin_left = 365.0
 margin_top = 1578.0
-margin_right = 705.0
+margin_right = 715.0
 margin_bottom = 1718.0
-rect_min_size = Vector2( 0, 140 )
+rect_min_size = Vector2( 350, 140 )
 size_flags_horizontal = 4
+custom_styles/hover = ExtResource( 5 )
+custom_styles/pressed = ExtResource( 5 )
+custom_styles/normal = ExtResource( 5 )
 text = "Start Game"
 [connection signal="pressed" from="Panel/VBoxContainer/Vbox/HBoxContainer/MinusStones" to="." method="_on_MinusStones_pressed"]
 [connection signal="pressed" from="Panel/VBoxContainer/Vbox/HBoxContainer/PlusStones" to="." method="_on_PlusStones_pressed"]
