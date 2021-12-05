@@ -48,18 +48,8 @@ func _process(_delta):
 			waiting_for_restart = true
 	elif end_over:
 		# Calculate points
-		var red_distances = []
-		var yellow_distance = []
-		
-		for stone in red_stones:
-			if is_instance_valid(stone):
-				red_distances.append(stone.global_position.distance_to($Goal.global_position))
-		for stone in yellow_stones:
-			if is_instance_valid(stone):
-				yellow_distance.append(stone.global_position.distance_to($Goal.global_position))
-		
-		red_distances.sort()
-		yellow_distance.sort()
+		var red_distances = get_distances(red_stones, $Goal.global_position)
+		var yellow_distances = get_distances(yellow_stones, $Goal.global_position)
 		
 #		print("reds before")
 #		print(red_distances)
@@ -67,30 +57,12 @@ func _process(_delta):
 #		print(yellow_distance)
 		
 		if mode == "Curling":
-			for i in red_distances.size():
-				if red_distances[i] > 325.25:
-					red_distances = red_distances.slice(0, i - 1)
-					break
-			
-			for i in yellow_distance.size():
-				if yellow_distance[i] > 325.25:
-					yellow_distance = yellow_distance.slice(0, i - 1)
-					break
+			red_distances = remove_distances_outside_goal(red_distances)
+			yellow_distances = remove_distances_outside_goal(yellow_distances)
 		
-		
-		if not red_distances.empty() and yellow_distance.empty():
-			red_score += red_distances.size()
-		elif red_distances.empty() and not yellow_distance.empty():
-			yellow_score += yellow_distance.size()
-		elif not red_distances.empty() and not yellow_distance.empty():
-			if red_distances[0] < yellow_distance[0]:
-				for dist in red_distances:
-					if dist < yellow_distance[0]:
-						red_score += 1
-			elif yellow_distance[0] < red_distances[0]:
-				for dist in yellow_distance:
-					if dist < red_distances[0]:
-						yellow_score += 1
+		var scores = calculate_scores(red_distances, yellow_distances, red_score, yellow_score)
+		red_score = scores[0]
+		yellow_score = scores[1]
 		
 		
 #		print("reds after")
@@ -126,7 +98,38 @@ func _process(_delta):
 		
 	else:
 		play_round()
-		
+
+func get_distances(stones, position):
+	var distances = [];
+	
+	for stone in stones:
+			if is_instance_valid(stone):
+				distances.append(stone.global_position.distance_to(position))
+	
+	distances.sort()
+	return distances
+
+func remove_distances_outside_goal(distances):
+	for i in distances.size():
+				if distances[i] > 325.25:
+					distances = distances.slice(0, i - 1)
+					return distances
+
+func calculate_scores(red_distances, yellow_distances, current_red_score, current_yellow_score):
+	if not red_distances.empty() and yellow_distances.empty():
+		current_red_score += red_distances.size()
+	elif red_distances.empty() and not yellow_distances.empty():
+		current_yellow_score += yellow_distances.size()
+	elif not red_distances.empty() and not yellow_distances.empty():
+		if red_distances[0] < yellow_distances[0]:
+			for dist in red_distances:
+				if dist < yellow_distances[0]:
+					current_red_score += 1
+		elif yellow_distances[0] < red_distances[0]:
+			for dist in yellow_distances:
+				if dist < red_distances[0]:
+					current_yellow_score += 1
+	return [current_red_score, current_yellow_score]
 
 func play_round():
 	update_score()
