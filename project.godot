@@ -17,6 +17,7 @@ _global_script_class_icons={
 config/name="Curling"
 run/main_scene="res://UI/MainMenu/MainMenu.tscn"
 boot_splash/image="res://RedStone.png"
+boot_splash/fullsize=false
 config/icon="res://RedStone.png"
 
 [autoload]
