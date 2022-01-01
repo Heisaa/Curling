@@ -16,6 +16,13 @@ func test_remove_distances_outside_goal():
 	
 	assert_eq(result, expected)
 
+func test_remove_distances_outside_goal_2():
+	var distances = [350, 402, 2000323]
+	var expected = []
+	var result = game.remove_distances_outside_goal(distances)
+	
+	assert_eq(result, expected)
+
 func test_calculate_scores_1():
 	var red_distances = [30, 35, 53, 62, 86]
 	var yellow_distances = [54, 56, 90]
@@ -34,6 +41,17 @@ func test_calculate_scores_2():
 	var yellow_score = 2
 	
 	var expected = [2, 5]
+	var result = game.calculate_scores(red_distances, yellow_distances, red_score, yellow_score)
+	
+	assert_eq(result, expected)
+
+func test_calculate_scores_3():
+	var red_distances = []
+	var yellow_distances = [30, 35]
+	var red_score = 2
+	var yellow_score = 2
+	
+	var expected = [2, 4]
 	var result = game.calculate_scores(red_distances, yellow_distances, red_score, yellow_score)
 	
 	assert_eq(result, expected)

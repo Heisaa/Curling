@@ -51,14 +51,19 @@ func _process(_delta):
 		var red_distances = get_distances(red_stones, $Goal.global_position)
 		var yellow_distances = get_distances(yellow_stones, $Goal.global_position)
 		
-#		print("reds before")
-#		print(red_distances)
-#		print("yellow before")
-#		print(yellow_distance)
+		print("reds before")
+		print(red_distances)
+		print("yellow before")
+		print(yellow_distances)
 		
 		if mode == "Curling":
 			red_distances = remove_distances_outside_goal(red_distances)
 			yellow_distances = remove_distances_outside_goal(yellow_distances)
+		
+		print("reds 2")
+		print(red_distances)
+		print("yellow 2")
+		print(yellow_distances)
 		
 		var scores = calculate_scores(red_distances, yellow_distances, red_score, yellow_score)
 		red_score = scores[0]
@@ -110,12 +115,15 @@ func get_distances(stones, position):
 	return distances
 
 func remove_distances_outside_goal(distances):
-	for i in distances.size():
-				if distances[i] > 325.25:
-					distances = distances.slice(0, i - 1)
-					return distances
+	var distances_inside_goal = []
+	for distance in distances:
+				if distance < 325.25:
+					distances_inside_goal.append(distance)
+	return distances_inside_goal
 
 func calculate_scores(red_distances, yellow_distances, current_red_score, current_yellow_score):
+	print(red_distances)
+	print(yellow_distances)
 	if not red_distances.empty() and yellow_distances.empty():
 		current_red_score += red_distances.size()
 	elif red_distances.empty() and not yellow_distances.empty():
