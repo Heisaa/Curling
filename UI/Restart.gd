@@ -20,8 +20,8 @@ func _layout_for_viewport():
 	$VBoxContainer.size = viewport_size
 
 func show_final_score(final_score_array):
-	var red_score = str(final_score_array[0])
-	var yellow_score = str(final_score_array[1])
+	var red_score = final_score_array[0]
+	var yellow_score = final_score_array[1]
 	
 	var winner = "No Player Wins!"
 	
@@ -33,7 +33,7 @@ func show_final_score(final_score_array):
 		winner = "It's a Draw"
 	
 	$VBoxContainer/MarginContainer/PanelContainer/VBoxContainer/LabelWinner.set_text(winner)
-	$VBoxContainer/MarginContainer/PanelContainer/VBoxContainer/LabelScore.set_text(red_score + " - " + yellow_score)
+	$VBoxContainer/MarginContainer/PanelContainer/VBoxContainer/LabelScore.set_text(str(red_score) + " - " + str(yellow_score))
 
 
 func _on_ButtonPlayAgain_pressed():

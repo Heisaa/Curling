@@ -27,6 +27,7 @@ const GOAL_Y = 300.0
 const LINE_OVER_BOTTOM_MARGIN = 420.0
 const SCORE_BOTTOM_MARGIN = 350.0
 const FontSizes = preload("res://UI/FontSizes.gd")
+const ScoreCalculator = preload("res://ScoreCalculator.gd")
 
 # Signals
 signal red_score_changed
@@ -39,6 +40,7 @@ signal final_score
 func _ready():
 	connect("red_score_changed", Callable($RedScore, "update_score"))
 	connect("yellow_score_changed", Callable($YellowScore, "update_score"))
+	$Rink.body_exited.connect(_on_rink_body_exited)
 	_apply_font_sizes()
 	init_score()
 	get_viewport().size_changed.connect(_layout_for_viewport)
@@ -57,33 +59,10 @@ func _process(_delta):
 			waiting_for_restart = true
 	elif end_over:
 		# Calculate points
-		var red_distances = get_distances(red_stones, $Goal.global_position)
-		var yellow_distances = get_distances(yellow_stones, $Goal.global_position)
-		
-		print("reds before")
-		print(red_distances)
-		print("yellow before")
-		print(yellow_distances)
-		
-		if mode == "Curling":
-			red_distances = remove_distances_outside_goal(red_distances)
-			yellow_distances = remove_distances_outside_goal(yellow_distances)
-		
-		print("reds 2")
-		print(red_distances)
-		print("yellow 2")
-		print(yellow_distances)
-		
-		var scores = calculate_scores(red_distances, yellow_distances, red_score, yellow_score)
+		var scores = calculate_end_scores()
 		red_score = scores[0]
 		yellow_score = scores[1]
-		
-		
-#		print("reds after")
-#		print(red_distances)
-#		print("yellow after")
-#		print(yellow_distance)
-		
+
 		emit_signal("red_score_changed", red_score)
 		emit_signal("yellow_score_changed", yellow_score)
 		
@@ -96,7 +75,8 @@ func _process(_delta):
 		# Reload game
 		if not game_over:
 			for stone in (red_stones + yellow_stones):
-				stone.queue_free()
+				if is_instance_valid(stone):
+					stone.queue_free()
 			
 			red_stones.clear()
 			yellow_stones.clear()
@@ -117,36 +97,27 @@ func get_distances(stones, position):
 	var distances = [];
 	
 	for stone in stones:
-			if is_instance_valid(stone):
+			if is_instance_valid(stone) and not stone.is_out:
 				distances.append(stone.global_position.distance_to(position))
 	
 	distances.sort()
 	return distances
 
 func remove_distances_outside_goal(distances):
-	var distances_inside_goal = []
-	for distance in distances:
-				if distance < 325.25:
-					distances_inside_goal.append(distance)
-	return distances_inside_goal
+	return ScoreCalculator.remove_distances_outside_goal(distances)
+
+func calculate_end_scores():
+	var red_distances = get_distances(red_stones, $Goal.global_position)
+	var yellow_distances = get_distances(yellow_stones, $Goal.global_position)
+	
+	if mode == "Curling":
+		red_distances = remove_distances_outside_goal(red_distances)
+		yellow_distances = remove_distances_outside_goal(yellow_distances)
+	
+	return calculate_scores(red_distances, yellow_distances, red_score, yellow_score)
 
 func calculate_scores(red_distances, yellow_distances, current_red_score, current_yellow_score):
-	print(red_distances)
-	print(yellow_distances)
-	if not red_distances.is_empty() and yellow_distances.is_empty():
-		current_red_score += red_distances.size()
-	elif red_distances.is_empty() and not yellow_distances.is_empty():
-		current_yellow_score += yellow_distances.size()
-	elif not red_distances.is_empty() and not yellow_distances.is_empty():
-		if red_distances[0] < yellow_distances[0]:
-			for dist in red_distances:
-				if dist < yellow_distances[0]:
-					current_red_score += 1
-		elif yellow_distances[0] < red_distances[0]:
-			for dist in yellow_distances:
-				if dist < red_distances[0]:
-					current_yellow_score += 1
-	return [current_red_score, current_yellow_score]
+	return ScoreCalculator.calculate_scores(red_distances, yellow_distances, current_red_score, current_yellow_score)
 
 func play_round():
 	update_score()
@@ -203,18 +174,11 @@ func play_round():
 			else:
 				create_red_stone()
 			
-		print("red stones:")
-		print(red_stones)
-		print("yellow stones:")
-		print(yellow_stones)
-
-
 func create_red_stone():
 	if red_played < max_stones:
 		var stone = stone_scene.instantiate()
 		stone.init("red")
 		add_child(stone)
-		$Rink.connect("body_exited", Callable(stone, "_on_Stone_body_exit"))
 		red_stones.append(stone)
 		red_played += 1
 		last_played = "red"
@@ -224,10 +188,13 @@ func create_yellow_stone():
 		var stone = stone_scene.instantiate()
 		stone.init("yellow")
 		add_child(stone)
-		$Rink.connect("body_exited", Callable(stone, "_on_Stone_body_exit"))
 		yellow_stones.append(stone)
 		yellow_played += 1
 		last_played = "yellow"
+
+func _on_rink_body_exited(body):
+	if is_instance_valid(body) and body.has_method("handle_rink_exit"):
+		body.handle_rink_exit($LineOver.global_position.y)
 
 func init_score():
 	for i in range(max_stones):

@@ -53,28 +53,32 @@ var play = true
 func _on_Stone_body_entered(_body):
 	
 	$Hit.set_volume_db(0)
-	_body.play = false
+	if is_instance_valid(_body) and _body.has_method("set_collision_sound_enabled"):
+		_body.set_collision_sound_enabled(false)
 	if play:
 		if last_velocity.length() > 1000:
 			$Hit.play()
 		else:
 			$Hit.set_volume_db(translate_range(last_velocity.length(), 0, 1000, -30, 0))
-			print($Hit.get_volume_db())
 			$Hit.play()
 			
 		
 
 func _on_Stone_body_exited(_body):
-	_body.play = true
+	if is_instance_valid(_body) and _body.has_method("set_collision_sound_enabled"):
+		_body.set_collision_sound_enabled(true)
 	
 
-func _on_Stone_body_exit(body):
-	if body.global_position.y < line_over.global_position.y:
-		body.is_out = true
+func handle_rink_exit(line_over_y):
+	if global_position.y < line_over_y:
+		is_out = true
 	else:
-		body.is_picked = false
-		body.global_position = _spawn_position()
-		body.linear_velocity = Vector2(0,0)
+		is_picked = false
+		global_position = _spawn_position()
+		linear_velocity = Vector2.ZERO
+
+func set_collision_sound_enabled(enabled):
+	play = enabled
 
 # Input functions
 func _input_event( _viewport, event, _shape_idx ):
