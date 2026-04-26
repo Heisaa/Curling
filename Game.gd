@@ -22,26 +22,35 @@ var end = 1
 var ends_to_play = Global.ends
 var mode = Global.mode
 
+const DESIGN_SIZE = Vector2(1080, 1920)
+const GOAL_Y = 300.0
+const LINE_OVER_BOTTOM_MARGIN = 420.0
+const SCORE_BOTTOM_MARGIN = 350.0
+const FontSizes = preload("res://UI/FontSizes.gd")
+
 # Signals
 signal red_score_changed
 signal yellow_score_changed
 signal final_score
 
-onready var stone_scene = load("res://Stone/Stone.tscn")
-onready var restart_scene = load("res://UI/Restart.tscn")
+@onready var stone_scene = load("res://Stone/Stone.tscn")
+@onready var restart_scene = load("res://UI/Restart.tscn")
 
 func _ready():
-	connect("red_score_changed", $RedScore, "update_score")
-	connect("yellow_score_changed", $YellowScore, "update_score")
+	connect("red_score_changed", Callable($RedScore, "update_score"))
+	connect("yellow_score_changed", Callable($YellowScore, "update_score"))
+	_apply_font_sizes()
 	init_score()
+	get_viewport().size_changed.connect(_layout_for_viewport)
+	_layout_for_viewport()
 
 func _process(_delta):
 	
 	if game_over:
 		if not waiting_for_restart:
-			var restart = restart_scene.instance()
+			var restart = restart_scene.instantiate()
 			add_child(restart)
-			connect("final_score", $Restart, "show_final_score")
+			connect("final_score", Callable($Restart, "show_final_score"))
 			
 			var final_score_array = [red_score, yellow_score]
 			emit_signal("final_score", final_score_array)
@@ -124,11 +133,11 @@ func remove_distances_outside_goal(distances):
 func calculate_scores(red_distances, yellow_distances, current_red_score, current_yellow_score):
 	print(red_distances)
 	print(yellow_distances)
-	if not red_distances.empty() and yellow_distances.empty():
+	if not red_distances.is_empty() and yellow_distances.is_empty():
 		current_red_score += red_distances.size()
-	elif red_distances.empty() and not yellow_distances.empty():
+	elif red_distances.is_empty() and not yellow_distances.is_empty():
 		current_yellow_score += yellow_distances.size()
-	elif not red_distances.empty() and not yellow_distances.empty():
+	elif not red_distances.is_empty() and not yellow_distances.is_empty():
 		if red_distances[0] < yellow_distances[0]:
 			for dist in red_distances:
 				if dist < yellow_distances[0]:
@@ -202,40 +211,72 @@ func play_round():
 
 func create_red_stone():
 	if red_played < max_stones:
-		var stone = stone_scene.instance()
+		var stone = stone_scene.instantiate()
 		stone.init("red")
 		add_child(stone)
-		$Rink.connect("body_exited", stone, "_on_Stone_body_exit")
+		$Rink.connect("body_exited", Callable(stone, "_on_Stone_body_exit"))
 		red_stones.append(stone)
 		red_played += 1
 		last_played = "red"
 
 func create_yellow_stone():
 	if yellow_played < max_stones:
-		var stone = stone_scene.instance()
+		var stone = stone_scene.instantiate()
 		stone.init("yellow")
 		add_child(stone)
-		$Rink.connect("body_exited", stone, "_on_Stone_body_exit")
+		$Rink.connect("body_exited", Callable(stone, "_on_Stone_body_exit"))
 		yellow_stones.append(stone)
 		yellow_played += 1
 		last_played = "yellow"
 
 func init_score():
 	for i in range(max_stones):
-		var sprite = Sprite.new()
-		sprite.position = Vector2((i * 50) + 30, 1530)
+		var sprite = Sprite2D.new()
 		sprite.scale = Vector2(0.4, 0.4)
 		sprite.texture = load("res://Stone/RedStone.png")
 		add_child(sprite)
 		red_score_sprites.append(sprite)
 	
 	for i in range(max_stones):
-		var sprite = Sprite.new()
-		sprite.position = Vector2((i * -50) + 1050, 1530)
+		var sprite = Sprite2D.new()
 		sprite.scale = Vector2(0.4, 0.4)
 		sprite.texture = load("res://Stone/YellowStone.png")
 		add_child(sprite)
 		yellow_score_sprites.append(sprite)
+
+func _apply_font_sizes():
+	$RedScore.add_theme_font_size_override("font_size", FontSizes.SCORE)
+	$YellowScore.add_theme_font_size_override("font_size", FontSizes.SCORE)
+
+func _layout_for_viewport():
+	var viewport_size = Vector2(get_viewport().get_visible_rect().size)
+	viewport_size.x = max(viewport_size.x, DESIGN_SIZE.x)
+	viewport_size.y = max(viewport_size.y, DESIGN_SIZE.y)
+	var center_x = viewport_size.x / 2.0
+	var line_over_y = viewport_size.y - LINE_OVER_BOTTOM_MARGIN
+	var score_y = viewport_size.y - SCORE_BOTTOM_MARGIN
+
+	$Rink.position = viewport_size / 2.0
+	$Rink/CollisionShape2D.shape.size = viewport_size
+	$Rink/ColorRect.offset_left = -viewport_size.x / 2.0
+	$Rink/ColorRect.offset_top = -viewport_size.y / 2.0
+	$Rink/ColorRect.offset_right = viewport_size.x / 2.0
+	$Rink/ColorRect.offset_bottom = viewport_size.y / 2.0
+
+	$Goal.position = Vector2(center_x, GOAL_Y)
+	$Goal/HorizontalGoal.points = PackedVector2Array([Vector2(-viewport_size.x / 2.0, 0), Vector2(viewport_size.x / 2.0, 0)])
+	$Goal/Vertical.points = PackedVector2Array([Vector2(0, viewport_size.y - GOAL_Y), Vector2(0, -GOAL_Y)])
+
+	$LineOver.position = Vector2(0, line_over_y)
+	$LineOver.points = PackedVector2Array([Vector2(0, 0), Vector2(viewport_size.x, 0)])
+
+	$RedScore.position = Vector2(5, score_y + 70)
+	$YellowScore.position = Vector2(viewport_size.x - 105, score_y + 70)
+
+	for i in range(red_score_sprites.size()):
+		red_score_sprites[i].position = Vector2((i * 50) + 30, score_y)
+	for i in range(yellow_score_sprites.size()):
+		yellow_score_sprites[i].position = Vector2(viewport_size.x - 30 - (i * 50), score_y)
 
 func update_score():
 	for i in max_stones:

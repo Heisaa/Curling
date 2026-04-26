@@ -6,18 +6,15 @@
 ;   [section] ; section goes between []
 ;   param=value ; assign values to parameters
 
-config_version=4
-
-_global_script_classes=[  ]
-_global_script_class_icons={
-}
+config_version=5
 
 [application]
 
 config/name="Curling"
 run/main_scene="res://UI/MainMenu/MainMenu.tscn"
+config/features=PackedStringArray("4.6")
+boot_splash/stretch_mode=0
 boot_splash/image="res://RedStone.png"
-boot_splash/fullsize=false
 config/icon="res://RedStone.png"
 
 [autoload]
@@ -26,26 +23,26 @@ Global="*res://global.gd"
 
 [display]
 
-window/size/width=1080
-window/size/height=1920
-window/size/test_width=1920
-window/size/test_height=1080
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/size/window_width_override=540
+window/size/window_height_override=960
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 window/handheld/orientation="portrait"
-window/stretch/mode="2d"
-window/stretch/aspect="keep"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/gut/plugin.cfg" )
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [input]
 
 click={
 "deadzone": 0.5,
-"events": [ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
- ]
+"events": [Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"button_mask":0,"position":Vector2(0, 0),"global_position":Vector2(0, 0),"factor":1.0,"button_index":1,"canceled":false,"pressed":false,"double_click":false,"script":null)
+]
 }
 
 [rendering]
 
-environment/default_environment="res://default_env.tres"
+environment/defaults/default_environment="res://default_env.tres"

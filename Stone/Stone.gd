@@ -8,20 +8,22 @@ var is_out = false
 var mouse_drag_speed = 30
 var last_velocity
 
-onready var line_over = get_node("../LineOver")
-onready var rink = get_node("../Rink")
+const STONE_BOTTOM_MARGIN = 220.0
+
+@onready var line_over = get_node("../LineOver")
+@onready var rink = get_node("../Rink")
 
 func _ready():
-	connect("body_entered",self, "_on_Stone_body_entered")
-	connect("body_exited",self, "_on_Stone_body_exited")
-	global_position = Vector2(540, 1700)
+	connect("body_entered", Callable(self, "_on_Stone_body_entered"))
+	connect("body_exited", Callable(self, "_on_Stone_body_exited"))
+	global_position = _spawn_position()
 	last_velocity = linear_velocity 
 
 func init(color):
 	if color == "yellow":
-		$Sprite.texture = load("res://Stone/YellowStone.png")
+		$Sprite2D.texture = load("res://Stone/YellowStone.png")
 	elif color == "red":
-		$Sprite.texture = load("res://Stone/RedStone.png")
+		$Sprite2D.texture = load("res://Stone/RedStone.png")
 
 func _physics_process(_delta):
 	if is_out:
@@ -71,7 +73,7 @@ func _on_Stone_body_exit(body):
 		body.is_out = true
 	else:
 		body.is_picked = false
-		body.global_position = Vector2(540, 1700)
+		body.global_position = _spawn_position()
 		body.linear_velocity = Vector2(0,0)
 
 # Input functions
@@ -85,7 +87,7 @@ func _input(event):
 
 # Utility functions
 func _event_is_left_button(event):
-	return event is InputEventMouseButton and event.button_index == BUTTON_LEFT    
+	return event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT
 
 func translate_range(value, leftMin, leftMax, rightMin, rightMax):
 	# Figure out how 'wide' each range is
@@ -97,3 +99,7 @@ func translate_range(value, leftMin, leftMax, rightMin, rightMax):
 
 	# Convert the 0-1 range into a value in the right range.
 	return rightMin + (valueScaled * rightSpan)
+
+func _spawn_position():
+	var viewport_size = Vector2(get_viewport().get_visible_rect().size)
+	return Vector2(viewport_size.x / 2.0, viewport_size.y - STONE_BOTTOM_MARGIN)

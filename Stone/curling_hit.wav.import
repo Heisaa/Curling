@@ -1,13 +1,14 @@
 [remap]
 
 importer="wav"
-type="AudioStreamSample"
-path="res://.import/curling_hit.wav-f86ad6796da61d4b8ca8d11b5a366444.sample"
+type="AudioStreamWAV"
+uid="uid://c4eaho56pghjd"
+path="res://.godot/imported/curling_hit.wav-f86ad6796da61d4b8ca8d11b5a366444.sample"
 
 [deps]
 
 source_file="res://Stone/curling_hit.wav"
-dest_files=[ "res://.import/curling_hit.wav-f86ad6796da61d4b8ca8d11b5a366444.sample" ]
+dest_files=["res://.godot/imported/curling_hit.wav-f86ad6796da61d4b8ca8d11b5a366444.sample"]
 
 [params]
 
@@ -17,5 +18,7 @@ force/max_rate=false
 force/max_rate_hz=44100
 edit/trim=false
 edit/normalize=false
-edit/loop=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
 compress/mode=0
