@@ -72,9 +72,17 @@ func _on_PetanqueRules_toggled(button_pressed):
 func _on_StartButton_pressed():
 	Global.stones = number_of_stones
 	Global.ends = number_of_ends
+	Global.sweep_test = false
 	
 	if $Panel/VBoxContainer/VBoxContainer2/HBoxContainer/CurlingRules.pressed:
 		Global.mode = "Curling"
 	else:
 		Global.mode = "Pétanque"
+	get_tree().change_scene_to_file("res://Game.tscn")
+
+func _on_SweepTestButton_pressed():
+	Global.stones = 4
+	Global.ends = 1
+	Global.mode = "Curling"
+	Global.sweep_test = true
 	get_tree().change_scene_to_file("res://Game.tscn")

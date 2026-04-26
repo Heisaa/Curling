@@ -18,6 +18,7 @@ var last_played = "yellow"
 var end_over = false
 var game_over = false
 var waiting_for_restart = false
+var sweep_test_started = false
 var end = 1
 var ends_to_play = Global.ends
 var mode = Global.mode
@@ -26,6 +27,7 @@ const DESIGN_SIZE = Vector2(1080, 1920)
 const GOAL_Y = 300.0
 const LINE_OVER_BOTTOM_MARGIN = 420.0
 const SCORE_BOTTOM_MARGIN = 350.0
+const SWEEP_TEST_STONE_SPEED = 940.0
 const FontSizes = preload("res://UI/FontSizes.gd")
 const ScoreCalculator = preload("res://ScoreCalculator.gd")
 
@@ -36,8 +38,11 @@ signal final_score
 
 @onready var stone_scene = load("res://Stone/Stone.tscn")
 @onready var restart_scene = load("res://UI/Restart.tscn")
+@onready var sweeping_controller = $SweepingController
 
 func _ready():
+	_apply_command_line_options()
+	sweeping_controller.reset_ice()
 	connect("red_score_changed", Callable($RedScore, "update_score"))
 	connect("yellow_score_changed", Callable($YellowScore, "update_score"))
 	$Rink.body_exited.connect(_on_rink_body_exited)
@@ -45,8 +50,24 @@ func _ready():
 	init_score()
 	get_viewport().size_changed.connect(_layout_for_viewport)
 	_layout_for_viewport()
+	if Global.sweep_test:
+		_start_sweep_test()
+
+func _apply_command_line_options():
+	for argument in OS.get_cmdline_user_args():
+		if argument == "--sweep-test":
+			Global.sweep_test = true
+			Global.mode = "Curling"
+			Global.stones = 4
+			Global.ends = 1
+			max_stones = Global.stones
+			ends_to_play = Global.ends
+			mode = Global.mode
 
 func _process(_delta):
+	if Global.sweep_test:
+		return
+	
 	
 	if game_over:
 		if not waiting_for_restart:
@@ -80,6 +101,7 @@ func _process(_delta):
 			
 			red_stones.clear()
 			yellow_stones.clear()
+			sweeping_controller.reset_ice()
 			red_played = 0
 			yellow_played = 0
 			
@@ -179,6 +201,7 @@ func create_red_stone():
 		var stone = stone_scene.instantiate()
 		stone.init("red")
 		add_child(stone)
+		sweeping_controller.register_stone(stone)
 		red_stones.append(stone)
 		red_played += 1
 		last_played = "red"
@@ -188,9 +211,51 @@ func create_yellow_stone():
 		var stone = stone_scene.instantiate()
 		stone.init("yellow")
 		add_child(stone)
+		sweeping_controller.register_stone(stone)
 		yellow_stones.append(stone)
 		yellow_played += 1
 		last_played = "yellow"
+
+func _start_sweep_test():
+	if sweep_test_started:
+		return
+
+	sweep_test_started = true
+	$RedScore.visible = false
+	$YellowScore.visible = false
+	for sprite in red_score_sprites + yellow_score_sprites:
+		sprite.visible = false
+
+	var viewport_size = Vector2(get_viewport().get_visible_rect().size)
+	viewport_size.x = max(viewport_size.x, DESIGN_SIZE.x)
+	viewport_size.y = max(viewport_size.y, DESIGN_SIZE.y)
+	var start_y = viewport_size.y - 260.0
+	var lane_width = viewport_size.x / 5.0
+	var intensities = [0.0, 0.25, 0.6, 1.0]
+	var labels = ["No sweep", "Light", "Medium", "Heavy"]
+
+	for i in range(intensities.size()):
+		var stone = stone_scene.instantiate()
+		stone.init("red")
+		add_child(stone)
+		sweeping_controller.register_stone(stone)
+
+		var start_position = Vector2(lane_width * float(i + 1), start_y)
+		var start_velocity = Vector2(0.0, -SWEEP_TEST_STONE_SPEED)
+		stone.configure_sweep_test(start_position, start_velocity, intensities[i])
+		if intensities[i] > 0.0:
+			sweeping_controller.create_sweep_test_path(start_position, start_velocity, intensities[i])
+		red_stones.append(stone)
+		_create_sweep_test_label(labels[i], start_position + Vector2(-90.0, 95.0))
+
+func _create_sweep_test_label(text, position):
+	var label = Label.new()
+	label.text = text
+	label.position = position
+	label.size = Vector2(180.0, 60.0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", FontSizes.DEFAULT)
+	add_child(label)
 
 func _on_rink_body_exited(body):
 	if is_instance_valid(body) and body.has_method("handle_rink_exit"):
