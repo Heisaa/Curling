@@ -31,6 +31,10 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation="portrait"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_vim/plugin.cfg", "res://addons/gut/plugin.cfg")
+
 [input]
 
 click={
