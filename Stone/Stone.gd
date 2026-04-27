@@ -4,6 +4,7 @@ var is_picked = false
 var is_dead = false
 var is_still = true
 var is_out = false
+var has_been_released = false
 
 var mouse_drag_speed = 30
 var last_velocity
@@ -12,9 +13,20 @@ var base_linear_damp = 1.2
 var sweep_power = 0.0
 var sweep_test_ice_intensity = 0.0
 var ice_intensity_provider
+var curl_direction = 0
+var curl_side_direction = Vector2.ZERO
 
 const STONE_BOTTOM_MARGIN = 220.0
+const STONE_RADIUS = 50.5
+const STONE_UI_CLEARANCE_FALLBACK = 22.0
 const SWEPT_LINEAR_DAMP = 0.01
+const CURL_FORCE = 42.0
+const CURL_MIN_SPEED = 35.0
+const CURL_MAX_SPEED = 1050.0
+const CURL_SPIN_SPEED = 3.4
+const CURL_SPIN_RESPONSE = 8.0
+const STILL_SPEED = 8.0
+const STILL_ANGULAR_SPEED = 0.08
 
 @onready var line_over = get_node("../LineOver")
 @onready var rink = get_node("../Rink")
@@ -50,12 +62,14 @@ func _physics_process(delta):
 		is_dead = true
 
 	_update_sweeping(delta)
+	_update_curl(delta)
+	_update_spin(delta)
 	
 	# Check if still
-	if last_velocity == linear_velocity:
-		is_still = true
-	else:
-		is_still = false
+	is_still = linear_velocity.length() <= STILL_SPEED and abs(angular_velocity) <= STILL_ANGULAR_SPEED
+	if is_still:
+		linear_velocity = Vector2.ZERO
+		angular_velocity = 0.0
 	
 	last_velocity = linear_velocity
 	
@@ -96,11 +110,29 @@ func configure_sweep_test(start_position, start_velocity, ice_intensity):
 	global_position = start_position
 	linear_velocity = start_velocity
 	is_picked = false
+	has_been_released = true
 	is_dead = true
 	is_still = false
 	is_out = false
 	sweep_power = 0.0
 	sweep_test_ice_intensity = ice_intensity
+
+func set_curl_direction(direction):
+	if not can_set_curl_direction():
+		return
+	curl_direction = clampi(direction, -1, 1)
+	if curl_direction == 0:
+		curl_side_direction = Vector2.ZERO
+		angular_velocity = 0.0
+	elif linear_velocity.length() > 0.0:
+		_set_curl_side_direction()
+
+func can_set_curl_direction():
+	if is_dead:
+		return false
+	if line_over == null:
+		return true
+	return global_position.y >= line_over.global_position.y
 
 # Input functions
 func _input_event( _viewport, event, _shape_idx ):
@@ -110,6 +142,9 @@ func _input_event( _viewport, event, _shape_idx ):
 
 func _input(event):
 	if _event_is_primary_release(event):
+		if is_picked:
+			has_been_released = true
+			_set_curl_side_direction()
 		is_picked = false
 	elif is_picked and _event_is_drag_motion(event):
 		drag_position = _event_position_to_world(event.position)
@@ -128,7 +163,9 @@ func _event_is_drag_motion(event):
 	return event is InputEventMouseMotion or event is InputEventScreenDrag
 
 func _event_position_to_world(screen_position):
-	return get_viewport().get_canvas_transform().affine_inverse() * screen_position
+	var world_position = get_viewport().get_canvas_transform().affine_inverse() * screen_position
+	world_position.y = min(world_position.y, _get_playable_bottom_y())
+	return world_position
 
 func can_be_swept():
 	return Global.mode == "Curling" and is_dead and not is_out and not is_picked and linear_velocity.length() > 0.0
@@ -148,6 +185,48 @@ func _update_sweeping(_delta):
 	sweep_power = max(sweep_test_ice_intensity, ice_intensity)
 	linear_damp = lerp(base_linear_damp, SWEPT_LINEAR_DAMP, sweep_power)
 
+func _update_curl(delta):
+	if curl_direction == 0 or is_picked or is_out:
+		return
+
+	var speed = linear_velocity.length()
+	if speed < CURL_MIN_SPEED:
+		return
+	if curl_side_direction == Vector2.ZERO:
+		_set_curl_side_direction()
+
+	var speed_factor = 1.0 - clamp(speed / CURL_MAX_SPEED, 0.0, 1.0)
+	var sweep_factor = 1.0 - sweep_power
+	linear_velocity += curl_side_direction * CURL_FORCE * speed_factor * sweep_factor * delta
+
+func _update_spin(delta):
+	if is_picked or is_out:
+		angular_velocity = 0.0
+		return
+
+	if curl_direction == 0:
+		angular_velocity = move_toward(angular_velocity, 0.0, CURL_SPIN_RESPONSE * delta)
+		if abs(angular_velocity) <= STILL_ANGULAR_SPEED:
+			angular_velocity = 0.0
+		return
+
+	var speed = linear_velocity.length()
+	if speed < CURL_MIN_SPEED:
+		angular_velocity = move_toward(angular_velocity, 0.0, CURL_SPIN_RESPONSE * delta)
+		if abs(angular_velocity) <= STILL_ANGULAR_SPEED:
+			angular_velocity = 0.0
+		return
+
+	var speed_factor = clamp(speed / CURL_MAX_SPEED, 0.35, 1.0)
+	var target_spin = float(curl_direction) * CURL_SPIN_SPEED * speed_factor
+	angular_velocity = lerp(angular_velocity, target_spin, min(1.0, CURL_SPIN_RESPONSE * delta))
+
+func _set_curl_side_direction():
+	if linear_velocity.length() <= 0.0:
+		curl_side_direction = Vector2.ZERO
+		return
+	curl_side_direction = linear_velocity.normalized().orthogonal() * -float(curl_direction)
+
 func translate_range(value, leftMin, leftMax, rightMin, rightMax):
 	# Figure out how 'wide' each range is
 	var leftSpan = leftMax - leftMin
@@ -161,4 +240,11 @@ func translate_range(value, leftMin, leftMax, rightMin, rightMax):
 
 func _spawn_position():
 	var viewport_size = Vector2(get_viewport().get_visible_rect().size)
-	return Vector2(viewport_size.x / 2.0, viewport_size.y - STONE_BOTTOM_MARGIN)
+	return Vector2(viewport_size.x / 2.0, _get_playable_bottom_y())
+
+func _get_playable_bottom_y():
+	var parent_node = get_parent()
+	if parent_node != null and parent_node.has_method("get_stone_playable_bottom_y"):
+		return parent_node.get_stone_playable_bottom_y(STONE_RADIUS)
+	var viewport_size = Vector2(get_viewport().get_visible_rect().size)
+	return viewport_size.y - STONE_BOTTOM_MARGIN - STONE_UI_CLEARANCE_FALLBACK

@@ -25,20 +25,33 @@ var mode = Global.mode
 var current_turn = ""
 var hud_panel
 var hud_panel_style
-var hud_turn_dot_style
 var hud_end_label
-var hud_turn_label
+var curl_panel
+var curl_button_left
+var curl_button_straight
+var curl_button_right
+var curl_button_styles = {}
+var selected_curl_direction = 0
+var current_stone
+var curl_selector_last_direction = null
+var curl_selector_last_enabled = null
+var curl_selector_last_visible = null
 
 const DESIGN_SIZE = Vector2(1080, 1920)
 const GOAL_Y = 300.0
 const LINE_OVER_BOTTOM_MARGIN = 420.0
 const SCORE_BOTTOM_MARGIN = 350.0
-const HUD_WIDTH = 620.0
-const HUD_BOTTOM_MARGIN = 18.0
-const HUD_BORDER_WIDTH = 14
-const HUD_CORNER_RADIUS = 36
+const HUD_TOP_MARGIN = 22.0
+const HUD_RIGHT_MARGIN = 24.0
+const HUD_END_WIDTH = 180.0
+const CURL_PANEL_WIDTH = 330.0
+const CURL_PANEL_HEIGHT = 92.0
+const CURL_PANEL_BORDER_WIDTH = 5
+const CURL_PANEL_BOTTOM_MARGIN = 16.0
+const STONE_UI_CLEARANCE = 22.0
 const SWEEP_TEST_STONE_SPEED = 940.0
 const FontSizes = preload("res://UI/FontSizes.gd")
+const CurlIcon = preload("res://UI/CurlIcon.gd")
 const ScoreCalculator = preload("res://ScoreCalculator.gd")
 
 # Signals
@@ -59,9 +72,11 @@ func _ready():
 	_apply_font_sizes()
 	init_score()
 	_create_hud()
+	_create_curl_selector()
 	get_viewport().size_changed.connect(_layout_for_viewport)
 	_layout_for_viewport()
 	_update_hud()
+	_update_curl_selector()
 	if Global.sweep_test:
 		_start_sweep_test()
 
@@ -117,6 +132,8 @@ func _process(_delta):
 			red_played = 0
 			yellow_played = 0
 			current_turn = ""
+			current_stone = null
+			selected_curl_direction = 0
 			
 			if end % 2 == 0:
 				# end is even
@@ -158,6 +175,7 @@ func calculate_scores(red_distances, yellow_distances, current_red_score, curren
 
 func play_round():
 	update_score()
+	_update_curl_selector()
 	# Check if stone should be spawned
 	var spawn_new_stone = true 
 	var combined = red_stones + yellow_stones
@@ -213,27 +231,35 @@ func play_round():
 			
 func create_red_stone():
 	if red_played < max_stones:
+		selected_curl_direction = 0
 		var stone = stone_scene.instantiate()
 		stone.init("red")
 		add_child(stone)
+		stone.set_curl_direction(selected_curl_direction)
 		sweeping_controller.register_stone(stone)
 		red_stones.append(stone)
 		red_played += 1
 		last_played = "red"
 		current_turn = "Red"
+		current_stone = stone
 		_update_hud()
+		_update_curl_selector()
 
 func create_yellow_stone():
 	if yellow_played < max_stones:
+		selected_curl_direction = 0
 		var stone = stone_scene.instantiate()
 		stone.init("yellow")
 		add_child(stone)
+		stone.set_curl_direction(selected_curl_direction)
 		sweeping_controller.register_stone(stone)
 		yellow_stones.append(stone)
 		yellow_played += 1
 		last_played = "yellow"
 		current_turn = "Yellow"
+		current_stone = stone
 		_update_hud()
+		_update_curl_selector()
 
 func _start_sweep_test():
 	if sweep_test_started:
@@ -242,6 +268,8 @@ func _start_sweep_test():
 	sweep_test_started = true
 	if hud_panel != null:
 		hud_panel.visible = false
+	if curl_panel != null:
+		curl_panel.visible = false
 	$RedScore.visible = false
 	$YellowScore.visible = false
 	for sprite in red_score_sprites + yellow_score_sprites:
@@ -301,8 +329,7 @@ func _apply_font_sizes():
 	$RedScore.add_theme_font_size_override("font_size", FontSizes.SCORE)
 	$YellowScore.add_theme_font_size_override("font_size", FontSizes.SCORE)
 	if hud_end_label != null:
-		hud_end_label.add_theme_font_size_override("font_size", 30)
-		hud_turn_label.add_theme_font_size_override("font_size", 34)
+		hud_end_label.add_theme_font_size_override("font_size", 32)
 
 func _create_hud():
 	var hud_layer = CanvasLayer.new()
@@ -310,58 +337,192 @@ func _create_hud():
 	add_child(hud_layer)
 
 	hud_panel = PanelContainer.new()
-	hud_panel.name = "MatchStatus"
+	hud_panel.name = "EndStatus"
 	hud_layer.add_child(hud_panel)
 
 	hud_panel_style = StyleBoxFlat.new()
-	hud_panel_style.bg_color = Color(0.05, 0.06, 0.06, 0.86)
-	hud_panel_style.border_color = Color(1.0, 1.0, 1.0, 0.20)
-	hud_panel_style.border_width_left = HUD_BORDER_WIDTH
-	hud_panel_style.border_width_top = HUD_BORDER_WIDTH
-	hud_panel_style.border_width_right = HUD_BORDER_WIDTH
-	hud_panel_style.border_width_bottom = HUD_BORDER_WIDTH
-	hud_panel_style.corner_radius_top_left = HUD_CORNER_RADIUS
-	hud_panel_style.corner_radius_top_right = HUD_CORNER_RADIUS
-	hud_panel_style.corner_radius_bottom_left = HUD_CORNER_RADIUS
-	hud_panel_style.corner_radius_bottom_right = HUD_CORNER_RADIUS
+	hud_panel_style.bg_color = Color(0.05, 0.06, 0.06, 0.82)
+	hud_panel_style.border_width_left = 0
+	hud_panel_style.border_width_top = 0
+	hud_panel_style.border_width_right = 0
+	hud_panel_style.border_width_bottom = 0
+	hud_panel_style.corner_radius_top_left = 16
+	hud_panel_style.corner_radius_top_right = 16
+	hud_panel_style.corner_radius_bottom_left = 16
+	hud_panel_style.corner_radius_bottom_right = 16
 	hud_panel.add_theme_stylebox_override("panel", hud_panel_style)
 
 	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 22)
+	margin.add_theme_constant_override("margin_left", 18)
 	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_right", 22)
+	margin.add_theme_constant_override("margin_right", 18)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	hud_panel.add_child(margin)
 
-	var layout = HBoxContainer.new()
-	layout.alignment = BoxContainer.ALIGNMENT_CENTER
-	layout.add_theme_constant_override("separation", 18)
-	margin.add_child(layout)
-
-	var hud_turn_dot = Panel.new()
-	hud_turn_dot.custom_minimum_size = Vector2(18.0, 18.0)
-	hud_turn_dot.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	hud_turn_dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	hud_turn_dot_style = StyleBoxFlat.new()
-	hud_turn_dot_style.bg_color = Color.WHITE
-	hud_turn_dot_style.corner_radius_top_left = 9
-	hud_turn_dot_style.corner_radius_top_right = 9
-	hud_turn_dot_style.corner_radius_bottom_left = 9
-	hud_turn_dot_style.corner_radius_bottom_right = 9
-	hud_turn_dot.add_theme_stylebox_override("panel", hud_turn_dot_style)
-	layout.add_child(hud_turn_dot)
-
-	hud_turn_label = Label.new()
-	hud_turn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hud_turn_label.add_theme_color_override("font_color", Color.WHITE)
-	layout.add_child(hud_turn_label)
-
 	hud_end_label = Label.new()
 	hud_end_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hud_end_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hud_end_label.add_theme_color_override("font_color", Color(0.84, 0.88, 0.90, 1.0))
-	layout.add_child(hud_end_label)
+	margin.add_child(hud_end_label)
 
 	_apply_font_sizes()
+
+func _create_curl_selector():
+	var hud_layer = get_node_or_null("HUD")
+	if hud_layer == null:
+		hud_layer = CanvasLayer.new()
+		hud_layer.name = "HUD"
+		add_child(hud_layer)
+
+	curl_panel = PanelContainer.new()
+	curl_panel.name = "CurlSelector"
+	var curl_panel_style = StyleBoxFlat.new()
+	curl_panel_style.bg_color = Color(0.04, 0.05, 0.05, 0.88)
+	curl_panel_style.border_color = Color(0.0, 0.0, 0.0, 0.96)
+	curl_panel_style.border_width_left = CURL_PANEL_BORDER_WIDTH
+	curl_panel_style.border_width_top = CURL_PANEL_BORDER_WIDTH
+	curl_panel_style.border_width_right = CURL_PANEL_BORDER_WIDTH
+	curl_panel_style.border_width_bottom = CURL_PANEL_BORDER_WIDTH
+	curl_panel_style.corner_radius_top_left = 30
+	curl_panel_style.corner_radius_top_right = 30
+	curl_panel_style.corner_radius_bottom_left = 30
+	curl_panel_style.corner_radius_bottom_right = 30
+	curl_panel.add_theme_stylebox_override("panel", curl_panel_style)
+	hud_layer.add_child(curl_panel)
+
+	var curl_panel_inset = MarginContainer.new()
+	curl_panel_inset.add_theme_constant_override("margin_left", CURL_PANEL_BORDER_WIDTH)
+	curl_panel_inset.add_theme_constant_override("margin_top", CURL_PANEL_BORDER_WIDTH)
+	curl_panel_inset.add_theme_constant_override("margin_right", CURL_PANEL_BORDER_WIDTH)
+	curl_panel_inset.add_theme_constant_override("margin_bottom", CURL_PANEL_BORDER_WIDTH)
+	curl_panel.add_child(curl_panel_inset)
+
+	var curl_button_row = HBoxContainer.new()
+	curl_button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	curl_button_row.add_theme_constant_override("separation", 0)
+	curl_panel_inset.add_child(curl_button_row)
+
+	curl_button_left = _create_curl_button(-1)
+	curl_button_straight = _create_curl_button(0)
+	curl_button_right = _create_curl_button(1)
+
+	curl_button_row.add_child(curl_button_left)
+	curl_button_row.add_child(curl_button_straight)
+	curl_button_row.add_child(curl_button_right)
+
+func _create_curl_button(direction):
+	var button = Button.new()
+	button.toggle_mode = true
+	button.focus_mode = Control.FOCUS_NONE
+	button.custom_minimum_size = Vector2((CURL_PANEL_WIDTH - CURL_PANEL_BORDER_WIDTH * 2.0) / 3.0, CURL_PANEL_HEIGHT - CURL_PANEL_BORDER_WIDTH * 2.0)
+	button.pressed.connect(_on_curl_button_pressed.bind(direction))
+	_store_curl_button_styles(button, direction)
+
+	var icon = CurlIcon.new()
+	icon.name = "Icon"
+	icon.direction = direction
+	icon.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	button.add_child(icon)
+	return button
+
+func _store_curl_button_styles(button, direction):
+	var normal_style = StyleBoxFlat.new()
+	normal_style.bg_color = Color(0.04, 0.05, 0.05, 0.88)
+	normal_style.border_width_left = 0
+	normal_style.border_width_top = 0
+	normal_style.border_width_right = 0
+	normal_style.border_width_bottom = 0
+	if direction == -1:
+		normal_style.corner_radius_top_left = 25
+		normal_style.corner_radius_bottom_left = 25
+	elif direction == 1:
+		normal_style.corner_radius_top_right = 25
+		normal_style.corner_radius_bottom_right = 25
+
+	var selected_style = normal_style.duplicate()
+	selected_style.bg_color = Color(1.0, 0.10, 0.08, 0.96)
+
+	var disabled_style = normal_style.duplicate()
+	disabled_style.bg_color = Color(0.04, 0.05, 0.05, 0.54)
+
+	curl_button_styles[button] = {
+		"normal": normal_style,
+		"selected": selected_style,
+		"disabled": disabled_style,
+	}
+
+func _on_curl_button_pressed(direction):
+	selected_curl_direction = direction
+	if is_instance_valid(current_stone) and current_stone.can_set_curl_direction():
+		current_stone.set_curl_direction(selected_curl_direction)
+	_update_curl_selector()
+
+func _update_curl_selector():
+	if curl_panel == null:
+		return
+
+	var should_be_visible = mode == "Curling" and not Global.sweep_test and not game_over
+	if curl_selector_last_visible != should_be_visible:
+		curl_panel.visible = should_be_visible
+		curl_selector_last_visible = should_be_visible
+
+	if not should_be_visible:
+		return
+
+	var can_choose_curl = is_instance_valid(current_stone) and current_stone.can_set_curl_direction()
+	var selected_color = _get_active_curl_color()
+
+	_update_curl_button(curl_button_left, selected_curl_direction == -1, can_choose_curl, selected_color)
+	_update_curl_button(curl_button_straight, selected_curl_direction == 0, can_choose_curl, selected_color)
+	_update_curl_button(curl_button_right, selected_curl_direction == 1, can_choose_curl, selected_color)
+	curl_button_left.disabled = not can_choose_curl
+	curl_button_straight.disabled = not can_choose_curl
+	curl_button_right.disabled = not can_choose_curl
+	curl_selector_last_direction = selected_curl_direction
+	curl_selector_last_enabled = can_choose_curl
+
+func _update_curl_button(button, is_selected, is_enabled, selected_color):
+	button.set_pressed_no_signal(is_selected)
+	var styles = curl_button_styles[button]
+	styles.selected.bg_color = selected_color
+	if is_selected:
+		button.add_theme_stylebox_override("normal", styles.selected)
+		button.add_theme_stylebox_override("pressed", styles.selected)
+		button.add_theme_stylebox_override("hover", styles.selected)
+		button.add_theme_stylebox_override("disabled", styles.selected)
+		_update_curl_icon_color(button, Color(0.04, 0.05, 0.05, 1.0))
+	elif not is_enabled:
+		button.add_theme_stylebox_override("normal", styles.disabled)
+		button.add_theme_stylebox_override("pressed", styles.disabled)
+		button.add_theme_stylebox_override("hover", styles.disabled)
+		button.add_theme_stylebox_override("disabled", styles.disabled)
+		_update_curl_icon_color(button, Color(1.0, 1.0, 1.0, 0.70))
+	else:
+		button.add_theme_stylebox_override("normal", styles.normal)
+		button.add_theme_stylebox_override("pressed", styles.normal)
+		button.add_theme_stylebox_override("hover", styles.normal)
+		button.add_theme_stylebox_override("disabled", styles.normal)
+		_update_curl_icon_color(button, Color.WHITE)
+
+func _update_curl_icon_color(button, color):
+	var icon = button.get_node_or_null("Icon")
+	if icon != null:
+		icon.icon_color = color
+
+func _get_active_curl_color():
+	var turn_name = current_turn
+	if turn_name == "":
+		turn_name = _get_next_turn_name()
+	return _get_turn_color(turn_name)
+
+func get_stone_playable_bottom_y(stone_radius):
+	var viewport_size = Vector2(get_viewport().get_visible_rect().size)
+	var ui_top = viewport_size.y
+	if curl_panel != null and curl_panel.visible:
+		ui_top = min(ui_top, curl_panel.position.y)
+	return ui_top - stone_radius - STONE_UI_CLEARANCE
 
 func _update_hud():
 	if hud_panel == null:
@@ -370,18 +531,13 @@ func _update_hud():
 	var turn_name = current_turn
 	if game_over:
 		turn_name = ""
-		hud_turn_label.text = "Game Over"
 	elif current_turn == "":
 		turn_name = _get_next_turn_name()
-		hud_turn_label.text = turn_name + " to throw"
-	else:
-		hud_turn_label.text = turn_name + " to throw"
 
 	var turn_color = _get_turn_color(turn_name)
-	hud_turn_dot_style.bg_color = turn_color
 	hud_panel_style.border_color = turn_color
 
-	hud_end_label.text = "End " + str(min(end, ends_to_play)) + "/" + str(ends_to_play)
+	hud_end_label.text = "End " + str(min(end, ends_to_play)) + " of " + str(ends_to_play)
 
 func _get_turn_color(turn_name):
 	if turn_name == "Red":
@@ -415,10 +571,13 @@ func _layout_for_viewport():
 	$RedScore.position = Vector2(5, score_y + 70)
 	$YellowScore.position = Vector2(viewport_size.x - 105, score_y + 70)
 	if hud_panel != null:
-		var hud_width = min(viewport_size.x - 40.0, HUD_WIDTH)
+		var hud_width = min(viewport_size.x - HUD_RIGHT_MARGIN * 2.0, HUD_END_WIDTH)
 		hud_panel.size = Vector2(hud_width, 0.0)
-		var hud_height = hud_panel.get_combined_minimum_size().y
-		hud_panel.position = Vector2(center_x - hud_width / 2.0, viewport_size.y - hud_height - HUD_BOTTOM_MARGIN)
+		hud_panel.position = Vector2(viewport_size.x - hud_width - HUD_RIGHT_MARGIN, HUD_TOP_MARGIN)
+	if curl_panel != null:
+		var curl_width = min(viewport_size.x - 40.0, CURL_PANEL_WIDTH)
+		curl_panel.size = Vector2(curl_width, CURL_PANEL_HEIGHT)
+		curl_panel.position = Vector2(center_x - curl_width / 2.0, viewport_size.y - CURL_PANEL_HEIGHT - CURL_PANEL_BOTTOM_MARGIN)
 
 	for i in range(red_score_sprites.size()):
 		red_score_sprites[i].position = Vector2((i * 50) + 30, score_y)
